@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #list-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Data Visualization</h1>
+    
+    <h2>Table View</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Height</th>
+                <th>Length</th>
+                <th>Volume</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.height }}</td>
+                <td>{{ item.length }}</td>
+                <td>{{ item.volume }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>List View</h2>
+    <ul>
+        {% for item in data %}
+        <li>ID: {{ item.id }}, Height: {{ item.height }}, Length: {{ item.length }}, Volume: {{ item.volume }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>D3.js Visualization</h2>
+    <div id="d3-container"></div>
+
+    <script>
+        // D3.js visualization code
+        const data = { data|tojson|safe };
+        
+        // Create a bar chart for volumes
+        const margin = {top: 20, right: 20, bottom: 30, left: 40};
+        const width = 600 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+
+        const svg = d3.select("#d3-container")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const x = d3.scaleBand()
+            .range([0, width])
+            .padding(0.1);
+
+        const y = d3.scaleLinear()
+            .range([height, 0]);
+
+        x.domain(data.map(d => d.id));
+        y.domain([0, d3.max(data, d => d.volume)]);
+
+        svg.selectAll(".bar")
+            .data(data)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", d => x(d.id))
+            .attr("width", x.bandwidth())
+            .attr("y", d => y(d.volume))
+            .attr("height", d => height - y(d.volume))
+            .attr("fill", "steelblue");
+
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x));
+
+        svg.append("g")
+            .call(d3.axisLeft(y));
+
+        // Add labels
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0 - margin.left)
+            .attr("x", 0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text("Volume");
+
+        svg.append("text")
+            .attr("transform", `translate(${width/2}, ${height + margin.top + 20})`)
+            .style("text-anchor", "middle")
+            .text("ID");
+    </script>
+</body>
+</html>
