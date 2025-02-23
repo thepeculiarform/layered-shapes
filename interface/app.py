@@ -1,13 +1,17 @@
 from flask import Flask, jsonify, render_template
-import sys
+import argparse
 
 import polars as pl
 
+import pathlib
+
+path = pathlib.Path(__file__).resolve().parent
 app = Flask(__name__)
 
 @app.route('/api/data')
 def get_data():
-    df = pl.read_json("E:/Projects/rjcd/rhino/layered_shapes/data.json")
+    data_path = str(path).split("interface")[0]
+    df = pl.read_json(f"{data_path}/data.json")
     result = df.to_dicts()
     res = jsonify(result)
     res.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
@@ -17,9 +21,14 @@ def get_data():
 
 @app.route('/')
 def index():
-    df = pl.read_json("E:/Projects/rjcd/rhino/layered_shapes/data.json")
+    data_path = str(path).split("interface")[0]
+    df = pl.read_json(f"{data_path}/data.json")
     data = df.to_dicts()
     return render_template('index.html', data=data)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    parser = argparse.ArgumentParser(description='Run the Flask app with a custom port.')
+    parser.add_argument('--port', type=int, default=5000, help='Port to run the app on (default: 5000)')
+    args = parser.parse_args()
+
+    app.run(host='0.0.0.0', port=args.port)

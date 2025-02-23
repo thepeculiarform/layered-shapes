@@ -1,5 +1,2 @@
 flask
-flask-socketio
-fastapi
-uvicorn
 polars
