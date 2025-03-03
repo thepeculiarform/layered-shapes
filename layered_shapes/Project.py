@@ -3,21 +3,110 @@ import Rhino.Geometry as rg
 import scriptcontext as sc
 
 import io
-import impact.Utils as iu
+import projectpy as pjct
 
 
-""" This Class is for"""
 
-class MyObject:
-    # this is the initial 
+
+
+
+class BaffleRow:
+    instances = []
+    def __init__(self, name: str, curve: rh.DocObjects.ObjectType.Curve, max_baffle_length=2800):
+        self.name = name
+        self.curve = curve
+        self.max_baffle_length = max_baffle_length
+        #
+        BaffleRow.instances.append(self)
+
+class BaffleLayout:
     def __init__(self, name: str):
         self.name = name
+        #
+        BaffleLayout.instances.append(self)
 
-    # this is a method
-    def say_something(self):
-        word = f"Hello {self.name}"
-        return word
-    
+    @property
+    def baffle_rows(self) -> list:
+        return []
+
+
+
+
+
+
+
+
+class Cloud:
+    def __init__(self, block: rh.DocObjects.InstanceDefinition, name=""):
+        self.name = name
+        self.block = block
+        self.info = {}
+
+        parts = self.block.Explode(True)[0]
+        xform = rg.Transform.Translation(rg.Vector3d(self.block.InsertionPoint))
+
+        circle = parts[0].Geometry.TryGetCircle()[-1]
+        circle.Transform(xform)
+        self.boundary = circle
+        self.center = circle.Center
+        self.baffle_curves = []
+
+    # xy surface
+    def boundary_surface(self):
+        for obj in self.block.GetSubObjects():
+            if type(obj.Geometry) == rh.Geometry.NurbsCurve:
+                return rh.Geometry.Brep.CreatePlanarBreps([obj.Geometry], .01)[0]
+
+    # xz baffle surfaces
+    def cloud_surfaces(self):
+        surfaces = []
+        depth = self.block.Attributes.GetUserString("depth")
+        for curve in self.baffle_curves: 
+            if len(self.baffle_curves) > 0:
+                extrude = rg.Extrusion.Create(curve, -(float(depth)), False)
+                if extrude is not None:
+                    print(extrude)
+                    extrude.ToBrep()
+                surfaces.append(extrude)
+        return surfaces
+
+    # xz cloud baffle surfaces
+    def cloud_baffle_surfaces(self):
+        surfaces = []
+        height = self.block.Attributes.GetUserString("height")
+        srfs = self.cloud_surfaces()
+        print(srfs)
+        for srf in srfs:
+            srf.Translate(0,0,float(height))
+            surfaces.append(srf)
+        return surfaces
+
+    # xz cloud baffle curves
+    def cloud_surface_curves(self):
+        curves = []
+        for srf in self.cloud_surfaces():
+            edge_curve = rg.Curve.JoinCurves(srf.Edges)
+            # print(edge_curve[0])
+
+            # filletA = rg.Curve.CreateFillet(edge_curve[1], edge_curve[0], 10,5,5)
+            curves.append(edge_curve[0])
+            # print(curves)
+        return curves
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
