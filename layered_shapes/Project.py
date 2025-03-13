@@ -3,8 +3,6 @@ import Rhino.Geometry as rg
 import scriptcontext as sc
 
 import io
-import projectpy as pjct
-
 
 
 
@@ -47,6 +45,7 @@ class Cloud:
 
         circle = parts[0].Geometry.TryGetCircle()[-1]
         circle.Transform(xform)
+        self.depth = [self.block.Attributes.GetUserString("depth") if self.block.Attributes.GetUserString("depth") is not None else None]
         self.boundary = circle
         self.center = circle.Center
         self.baffle_curves = []
@@ -60,10 +59,10 @@ class Cloud:
     # xz baffle surfaces
     def cloud_surfaces(self):
         surfaces = []
-        depth = self.block.Attributes.GetUserString("depth")
+        self.depth = self.block.Attributes.GetUserString("depth")
         for curve in self.baffle_curves: 
             if len(self.baffle_curves) > 0:
-                extrude = rg.Extrusion.Create(curve, -(float(depth)), False)
+                extrude = rg.Extrusion.Create(curve, -(float(self.depth)), False)
                 if extrude is not None:
                     print(extrude)
                     extrude.ToBrep()
